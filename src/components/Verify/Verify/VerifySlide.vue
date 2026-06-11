@@ -231,7 +231,7 @@ export default {
         ) {
           move_block_left
               = barArea.value.offsetWidth
-              - Number.parseInt(blockSize.value.width, 10) / 2 - 2
+                - Number.parseInt(blockSize.value.width, 10) / 2 - 2
         }
         if (move_block_left <= 0) {
           move_block_left = Number.parseInt(blockSize.value.width, 10) / 2
@@ -281,9 +281,9 @@ export default {
           captchaType: captchaType.value,
           pointJson: secretKey.value
             ? encryptByAes(
-              JSON.stringify({ x: moveLeftDistance, y: 5.0 }),
-              secretKey.value,
-            )
+                JSON.stringify({ x: moveLeftDistance, y: 5.0 }),
+                secretKey.value,
+              )
             : JSON.stringify({ x: moveLeftDistance, y: 5.0 }),
           token: backToken.value,
         }
@@ -303,21 +303,21 @@ export default {
             }
             passFlag.value = true
             tipWords.value = `${(
-                (endMovetime.value - startMoveTime.value)
-                / 1000
+              (endMovetime.value - startMoveTime.value)
+              / 1000
             ).toFixed(2)}s验证成功`
             const captchaVerification = secretKey.value
               ? encryptByAes(
-                    `${backToken.value}---${JSON.stringify({
-                      x: moveLeftDistance,
-                      y: 5.0,
-                    })}`,
-                    secretKey.value,
-              )
+                  `${backToken.value}---${JSON.stringify({
+                    x: moveLeftDistance,
+                    y: 5.0,
+                  })}`,
+                  secretKey.value,
+                )
               : `${backToken.value}---${JSON.stringify({
-                  x: moveLeftDistance,
-                  y: 5.0,
-                })}`
+                x: moveLeftDistance,
+                y: 5.0,
+              })}`
             setTimeout(() => {
               tipWords.value = ''
               proxy.$parent.closeBox()

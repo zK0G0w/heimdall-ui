@@ -552,7 +552,7 @@ export function useMultipartUploader(props: {
     } catch (error: any) {
       // 捕获并处理所有未处理的异常
       const errorMsg = error?.message || '未知错误'
-      // eslint-disable-next-line no-console
+
       console.error(`[Hooks] 上传任务异常: ${task.fileName}, 错误: ${errorMsg}`, error)
 
       if (task.status !== 'failed') {
