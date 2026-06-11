@@ -12,14 +12,14 @@ export function getConsentInfo(authReqId: string) {
 
 /** @desc 用户同意授权 */
 export function approveConsent(authReqId: string) {
-  return http.post<T.Oauth2RedirectResp>(`${BASE_URL}/approve`, { auth_req_id: authReqId }, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  })
+  const params = new URLSearchParams()
+  params.append('auth_req_id', authReqId)
+  return http.post<T.Oauth2RedirectResp>(`${BASE_URL}/approve`, params)
 }
 
 /** @desc 用户拒绝授权 */
 export function denyConsent(authReqId: string) {
-  return http.post<T.Oauth2RedirectResp>(`${BASE_URL}/deny`, { auth_req_id: authReqId }, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  })
+  const params = new URLSearchParams()
+  params.append('auth_req_id', authReqId)
+  return http.post<T.Oauth2RedirectResp>(`${BASE_URL}/deny`, params)
 }
