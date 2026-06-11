@@ -12,12 +12,11 @@ const mocks: MockMethod[] = [
         data: {
           authReqId: 'mock-auth-req-001',
           appName: '内部OA系统',
-          appLogo: '',
-          appDescription: '公司内部办公协作平台',
+          logo: '',
           scopes: [
-            { scopeCode: 'openid', scopeName: '用户唯一标识', description: '获取你的用户 ID' },
-            { scopeCode: 'profile', scopeName: '基本信息', description: '读取你的昵称和头像' },
-            { scopeCode: 'email', scopeName: '邮箱地址', description: '获取你的邮箱地址' },
+            { code: 'openid', name: '用户唯一标识', description: '获取你的用户 ID' },
+            { code: 'profile', name: '基本信息', description: '读取你的昵称和头像' },
+            { code: 'email', name: '邮箱地址', description: '获取你的邮箱地址' },
           ],
         },
       }

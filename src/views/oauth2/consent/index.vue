@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Message } from '@arco-design/web-vue'
 import { useRoute } from 'vue-router'
-import { type Oauth2ConsentInfoResp, approveConsent, denyConsent, getConsentInfo } from '@/apis/oauth2/consent'
+import { type Oauth2ConsentInfoResp, getConsentInfo, submitConsentDecision } from '@/apis/oauth2/consent'
 import { useUserStore } from '@/stores'
 
 defineOptions({ name: 'Oauth2Consent' })
@@ -43,26 +42,14 @@ const fetchConsentInfo = async () => {
   }
 }
 
-const handleApprove = async () => {
+const handleApprove = () => {
   submitting.value = true
-  try {
-    const { data } = await approveConsent({ authReqId: authReqId.value })
-    window.location.href = data.redirectUri
-  } catch {
-    Message.error('授权操作失败，请重试')
-    submitting.value = false
-  }
+  submitConsentDecision('approve', authReqId.value)
 }
 
-const handleDeny = async () => {
+const handleDeny = () => {
   submitting.value = true
-  try {
-    const { data } = await denyConsent({ authReqId: authReqId.value })
-    window.location.href = data.redirectUri
-  } catch {
-    Message.error('操作失败，请重试')
-    submitting.value = false
-  }
+  submitConsentDecision('deny', authReqId.value)
 }
 
 const handleSwitchAccount = () => {
@@ -113,8 +100,8 @@ onMounted(() => {
         <!-- 应用信息 -->
         <div class="consent-app">
           <img
-            v-if="consentInfo.appLogo"
-            :src="consentInfo.appLogo"
+            v-if="consentInfo.logo"
+            :src="consentInfo.logo"
             :alt="consentInfo.appName"
             class="consent-app__logo"
           />
@@ -125,11 +112,11 @@ onMounted(() => {
 
         <!-- Scope 列表 -->
         <div class="consent-scopes">
-          <div v-for="scope in consentInfo.scopes" :key="scope.scopeCode" class="consent-scopes__item">
+          <div v-for="scope in consentInfo.scopes" :key="scope.code" class="consent-scopes__item">
             <span class="consent-scopes__dot"></span>
             <div class="consent-scopes__text">
-              <span class="consent-scopes__name">{{ scope.scopeName }}</span>
-              <span class="consent-scopes__code">{{ scope.scopeCode }}</span>
+              <span class="consent-scopes__name">{{ scope.name }}</span>
+              <span class="consent-scopes__code">{{ scope.code }}</span>
             </div>
           </div>
         </div>

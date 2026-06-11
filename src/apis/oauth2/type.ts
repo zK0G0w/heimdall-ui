@@ -65,8 +65,8 @@ export interface Oauth2AppSecretCreateResp {
 
 /** 授权确认页 Scope 项 */
 export interface Oauth2ConsentScopeItem {
-  scopeCode: string
-  scopeName: string
+  code: string
+  name: string
   description: string
 }
 
@@ -74,17 +74,6 @@ export interface Oauth2ConsentScopeItem {
 export interface Oauth2ConsentInfoResp {
   authReqId: string
   appName: string
-  appLogo: string
-  appDescription: string
+  logo: string
   scopes: Oauth2ConsentScopeItem[]
-}
-
-/** POST /oauth2/consent/approve 和 /deny 请求体 */
-export interface Oauth2ConsentDecisionReq {
-  authReqId: string
-}
-
-/** POST /oauth2/consent/approve 和 /deny 响应 */
-export interface Oauth2ConsentDecisionResp {
-  redirectUri: string
 }

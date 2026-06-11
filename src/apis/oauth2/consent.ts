@@ -10,12 +10,23 @@ export function getConsentInfo(authReqId: string) {
   return http.get<T.Oauth2ConsentInfoResp>(`${BASE_URL}`, { auth_req_id: authReqId })
 }
 
-/** @desc 用户同意授权 */
-export function approveConsent(data: T.Oauth2ConsentDecisionReq) {
-  return http.post<T.Oauth2ConsentDecisionResp>(`${BASE_URL}/approve`, data)
-}
+/**
+ * @desc 提交授权决策（同意/拒绝）
+ * 后端 approve/deny 端点使用 302 重定向，前端通过表单提交让浏览器跟随跳转
+ */
+export function submitConsentDecision(action: 'approve' | 'deny', authReqId: string) {
+  const apiPrefix = import.meta.env.VITE_API_PREFIX || ''
+  const url = `${apiPrefix}${BASE_URL}/${action}`
+  const form = document.createElement('form')
+  form.method = 'POST'
+  form.action = url
 
-/** @desc 用户拒绝授权 */
-export function denyConsent(data: T.Oauth2ConsentDecisionReq) {
-  return http.post<T.Oauth2ConsentDecisionResp>(`${BASE_URL}/deny`, data)
+  const input = document.createElement('input')
+  input.type = 'hidden'
+  input.name = 'auth_req_id'
+  input.value = authReqId
+  form.appendChild(input)
+
+  document.body.appendChild(form)
+  form.submit()
 }
