@@ -81,7 +81,11 @@ const handleLogin = async () => {
     // 如果有重定向参数，解码并直接跳转到完整路径
     if (redirect) {
       const redirectPath = decodeURIComponent(redirect as string)
-      await router.push(redirectPath)
+      if (redirectPath.startsWith('http')) {
+        window.location.href = redirectPath
+      } else {
+        await router.push(redirectPath)
+      }
     } else {
       await router.push({
         path: '/',
