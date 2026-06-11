@@ -1,8 +1,8 @@
-import { defineMock } from './_base'
+import type { MockMethod } from 'vite-plugin-mock'
 
-export default defineMock([
+const mocks: MockMethod[] = [
   {
-    url: '/oauth2/consent',
+    url: '/dev-api/oauth2/consent',
     method: 'get',
     response: () => {
       return {
@@ -24,7 +24,7 @@ export default defineMock([
     },
   },
   {
-    url: '/oauth2/consent/approve',
+    url: '/dev-api/oauth2/consent/approve',
     method: 'post',
     response: () => {
       return {
@@ -38,7 +38,7 @@ export default defineMock([
     },
   },
   {
-    url: '/oauth2/consent/deny',
+    url: '/dev-api/oauth2/consent/deny',
     method: 'post',
     response: () => {
       return {
@@ -51,4 +51,6 @@ export default defineMock([
       }
     },
   },
-])
+]
+
+export default mocks
