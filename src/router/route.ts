@@ -43,6 +43,12 @@ export const systemRoutes: RouteRecordRaw[] = [
     meta: { hidden: true },
   },
   {
+    path: '/oauth2/consent',
+    name: 'Oauth2Consent',
+    component: () => import('@/views/oauth2/consent/index.vue'),
+    meta: { hidden: true },
+  },
+  {
     path: '/user',
     name: 'User',
     component: Layout,
