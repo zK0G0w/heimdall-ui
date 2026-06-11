@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { Message } from '@arco-design/web-vue'
 import { useRoute } from 'vue-router'
-import { type Oauth2ConsentInfoResp, getConsentInfo, submitConsentDecision } from '@/apis/oauth2/consent'
+import { type Oauth2ConsentData, approveConsent, denyConsent, getConsentInfo } from '@/apis/oauth2/consent'
 import { useUserStore } from '@/stores'
 
-defineOptions({ name: 'Oauth2Consent' })
+defineOptions({ name: 'Oauth2Authorize' })
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -11,14 +12,14 @@ const userStore = useUserStore()
 const loading = ref(true)
 const submitting = ref(false)
 const error = ref('')
-const consentInfo = ref<Oauth2ConsentInfoResp>()
+const consentData = ref<Oauth2ConsentData>()
 
 const authReqId = computed(() => (route.query.auth_req_id as string) || '')
 
 const currentUser = computed(() => userStore.userInfo?.nickname || userStore.userInfo?.username || '')
 
 const appInitial = computed(() => {
-  const name = consentInfo.value?.appName || ''
+  const name = consentData.value?.appName || ''
   return name.charAt(0)
 })
 
@@ -30,7 +31,11 @@ const fetchConsentInfo = async () => {
   }
   try {
     const { data } = await getConsentInfo(authReqId.value)
-    consentInfo.value = data
+    if (!data.needConsent && data.redirectUrl) {
+      window.location.href = data.redirectUrl
+      return
+    }
+    consentData.value = data.consentData
   } catch (e: any) {
     if (e?.response?.status === 400) {
       error.value = '授权请求已过期，请返回应用重新发起'
@@ -42,14 +47,26 @@ const fetchConsentInfo = async () => {
   }
 }
 
-const handleApprove = () => {
+const handleApprove = async () => {
   submitting.value = true
-  submitConsentDecision('approve', authReqId.value)
+  try {
+    const { data } = await approveConsent(authReqId.value)
+    window.location.href = data.redirectUrl
+  } catch {
+    Message.error('授权操作失败，请重试')
+    submitting.value = false
+  }
 }
 
-const handleDeny = () => {
+const handleDeny = async () => {
   submitting.value = true
-  submitConsentDecision('deny', authReqId.value)
+  try {
+    const { data } = await denyConsent(authReqId.value)
+    window.location.href = data.redirectUrl
+  } catch {
+    Message.error('操作失败，请重试')
+    submitting.value = false
+  }
 }
 
 const handleSwitchAccount = () => {
@@ -96,23 +113,23 @@ onMounted(() => {
       </template>
 
       <!-- 正常展示 -->
-      <template v-else-if="consentInfo">
+      <template v-else-if="consentData">
         <!-- 应用信息 -->
         <div class="consent-app">
           <img
-            v-if="consentInfo.logo"
-            :src="consentInfo.logo"
-            :alt="consentInfo.appName"
+            v-if="consentData.logo"
+            :src="consentData.logo"
+            :alt="consentData.appName"
             class="consent-app__logo"
           />
           <div v-else class="consent-app__logo-fallback">{{ appInitial }}</div>
-          <h2 class="consent-app__name">{{ consentInfo.appName }}</h2>
+          <h2 class="consent-app__name">{{ consentData.appName }}</h2>
           <p class="consent-app__desc">请求获取你的以下权限</p>
         </div>
 
         <!-- Scope 列表 -->
         <div class="consent-scopes">
-          <div v-for="scope in consentInfo.scopes" :key="scope.code" class="consent-scopes__item">
+          <div v-for="scope in consentData.scopes" :key="scope.code" class="consent-scopes__item">
             <span class="consent-scopes__dot"></span>
             <div class="consent-scopes__text">
               <span class="consent-scopes__name">{{ scope.name }}</span>

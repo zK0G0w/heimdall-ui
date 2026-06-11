@@ -5,28 +5,21 @@ export type * from './type'
 
 const BASE_URL = '/oauth2/consent'
 
-/** @desc 获取授权确认页数据 */
+/** @desc 获取授权决策数据（判断是否需要展示确认页） */
 export function getConsentInfo(authReqId: string) {
-  return http.get<T.Oauth2ConsentInfoResp>(`${BASE_URL}`, { auth_req_id: authReqId })
+  return http.get<T.Oauth2AuthorizeResp>(`${BASE_URL}`, { auth_req_id: authReqId })
 }
 
-/**
- * @desc 提交授权决策（同意/拒绝）
- * 后端 approve/deny 端点使用 302 重定向，前端通过表单提交让浏览器跟随跳转
- */
-export function submitConsentDecision(action: 'approve' | 'deny', authReqId: string) {
-  const apiPrefix = import.meta.env.VITE_API_PREFIX || ''
-  const url = `${apiPrefix}${BASE_URL}/${action}`
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = url
+/** @desc 用户同意授权 */
+export function approveConsent(authReqId: string) {
+  return http.post<T.Oauth2RedirectResp>(`${BASE_URL}/approve`, { auth_req_id: authReqId }, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+}
 
-  const input = document.createElement('input')
-  input.type = 'hidden'
-  input.name = 'auth_req_id'
-  input.value = authReqId
-  form.appendChild(input)
-
-  document.body.appendChild(form)
-  form.submit()
+/** @desc 用户拒绝授权 */
+export function denyConsent(authReqId: string) {
+  return http.post<T.Oauth2RedirectResp>(`${BASE_URL}/deny`, { auth_req_id: authReqId }, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
 }

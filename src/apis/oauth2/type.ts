@@ -70,10 +70,22 @@ export interface Oauth2ConsentScopeItem {
   description: string
 }
 
-/** GET /oauth2/consent 响应 */
-export interface Oauth2ConsentInfoResp {
-  authReqId: string
+/** 授权确认页应用数据（consentData） */
+export interface Oauth2ConsentData {
   appName: string
   logo: string
+  authReqId: string
   scopes: Oauth2ConsentScopeItem[]
+}
+
+/** GET /oauth2/consent 响应 */
+export interface Oauth2AuthorizeResp {
+  needConsent: boolean
+  redirectUrl?: string
+  consentData?: Oauth2ConsentData
+}
+
+/** POST /oauth2/consent/approve 和 /deny 响应 */
+export interface Oauth2RedirectResp {
+  redirectUrl: string
 }
