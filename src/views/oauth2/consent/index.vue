@@ -300,11 +300,6 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-
-  @media (max-width: 480px) {
-    padding: 28px 20px;
-    border-radius: 12px;
-  }
 }
 
 .consent-loading {
@@ -580,8 +575,6 @@ onMounted(() => {
 @media (max-width: 480px) {
   .consent-page {
     padding: 16px 12px;
-    justify-content: flex-start;
-    padding-top: 60px;
   }
 
   .consent-theme-toggle {
