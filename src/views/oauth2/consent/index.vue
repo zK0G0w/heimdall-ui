@@ -223,7 +223,7 @@ onMounted(() => {
 
     <!-- 底部品牌标识 -->
     <div class="consent-brand">
-      <img src="/logo.svg" alt="Heimdall" class="consent-brand__logo" />
+      <img src="/logo.png" alt="Heimdall" class="consent-brand__logo" />
       <span class="consent-brand__text">Heimdall</span>
       <span class="consent-brand__divider"></span>
       <span class="consent-brand__slogan">统一认证中心</span>

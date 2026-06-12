@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="public/logo.svg" width="64" height="64" alt="Heimdall Logo" />
-</p>
-
 <h1 align="center">Heimdall UI</h1>
 
 <p align="center">
