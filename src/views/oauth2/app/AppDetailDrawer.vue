@@ -153,10 +153,10 @@ const onCreateSecret = async () => {
     title: '密钥创建成功',
     content: () =>
       h('div', [
-        h('p', { style: 'margin-bottom: 8px; color: #ff7d00;' }, '密钥仅展示一次，请妥善保存！'),
+        h('p', { style: 'margin-bottom: 8px; color: rgb(var(--warning-6));' }, '密钥仅展示一次，请妥善保存！'),
         h(
           'p',
-          { style: 'word-break: break-all; font-family: monospace; background: #f2f3f5; padding: 8px; border-radius: 4px;' },
+          { style: 'word-break: break-all; font-family: monospace; background: var(--color-fill-2); color: var(--color-text-1); padding: 8px; border-radius: 4px;' },
           data.clientSecret,
         ),
       ]),
