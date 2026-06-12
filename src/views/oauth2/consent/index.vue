@@ -247,8 +247,9 @@ onMounted(() => {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse at 20% 0%, rgba(var(--primary-6), 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 100%, rgba(var(--primary-6), 0.04) 0%, transparent 50%);
+      radial-gradient(ellipse 600px 400px at 15% 10%, rgba(var(--primary-6), 0.15) 0%, transparent 70%),
+      radial-gradient(ellipse 500px 350px at 85% 90%, rgba(var(--primary-4), 0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 300px 300px at 50% 50%, rgba(var(--primary-6), 0.03) 0%, transparent 60%);
     pointer-events: none;
   }
 }
