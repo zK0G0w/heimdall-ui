@@ -15,6 +15,7 @@ const submitting = ref(false)
 const error = ref('')
 const consentData = ref<Oauth2ConsentData>()
 const isDark = ref(false)
+const cardVisible = ref(false)
 
 const authReqId = computed(() => (route.query.auth_req_id as string) || '')
 
@@ -52,6 +53,7 @@ const fetchConsentInfo = async () => {
   if (!authReqId.value) {
     error.value = '参数错误，请返回应用重新发起授权'
     loading.value = false
+    cardVisible.value = true
     return
   }
   try {
@@ -69,6 +71,9 @@ const fetchConsentInfo = async () => {
     }
   } finally {
     loading.value = false
+    setTimeout(() => {
+      cardVisible.value = true
+    }, 50)
   }
 }
 
@@ -102,6 +107,7 @@ const handleSwitchAccount = () => {
 const handleRetry = () => {
   error.value = ''
   loading.value = true
+  cardVisible.value = false
   fetchConsentInfo()
 }
 
@@ -113,32 +119,32 @@ onMounted(() => {
 
 <template>
   <div class="consent-page">
+    <!-- 背景纹理 -->
+    <div class="consent-page__bg"></div>
+
     <!-- 主题切换按钮 -->
     <button class="consent-theme-toggle" :title="isDark ? '切换到亮色模式' : '切换到暗色模式'" @click="toggleTheme">
       <icon-sun-fill v-if="isDark" :size="18" />
       <icon-moon-fill v-else :size="18" />
     </button>
 
-    <div class="consent-card">
-      <!-- 卡片顶部装饰线 -->
-      <div class="consent-card__accent"></div>
-
+    <div class="consent-card" :class="{ 'consent-card--visible': cardVisible }">
       <!-- 加载中 -->
       <template v-if="loading">
-        <a-space direction="vertical" fill :size="16" style="width: 100%">
-          <a-skeleton :animation="true">
-            <a-skeleton-shape shape="circle" style="width: 56px; height: 56px; margin: 0 auto; display: block;" />
-          </a-skeleton>
-          <a-skeleton :animation="true">
-            <a-skeleton-line :rows="4" />
-          </a-skeleton>
-        </a-space>
+        <div class="consent-loading">
+          <div class="consent-loading__shield">
+            <icon-lock :size="24" />
+          </div>
+          <p class="consent-loading__text">正在加载授权信息...</p>
+        </div>
       </template>
 
       <!-- 错误状态 -->
       <template v-else-if="error">
         <div class="consent-error">
-          <icon-exclamation-circle-fill :size="48" style="color: rgb(var(--warning-6));" />
+          <div class="consent-error__icon">
+            <icon-exclamation-circle-fill :size="48" />
+          </div>
           <p class="consent-error__msg">{{ error }}</p>
           <a-space>
             <a-button @click="handleRetry">重试</a-button>
@@ -149,40 +155,68 @@ onMounted(() => {
 
       <!-- 正常展示 -->
       <template v-else-if="consentData">
+        <!-- 安全标识 -->
+        <div class="consent-security">
+          <icon-safe :size="14" />
+          <span>安全授权</span>
+        </div>
+
         <!-- 应用信息 -->
         <div class="consent-app">
-          <img
-            v-if="consentData.logo"
-            :src="consentData.logo"
-            :alt="consentData.appName"
-            class="consent-app__logo"
-          />
-          <div v-else class="consent-app__logo-fallback">{{ appInitial }}</div>
+          <div class="consent-app__logo-wrapper">
+            <img
+              v-if="consentData.logo"
+              :src="consentData.logo"
+              :alt="consentData.appName"
+              class="consent-app__logo"
+            />
+            <div v-else class="consent-app__logo-fallback">
+              <span>{{ appInitial }}</span>
+            </div>
+          </div>
           <h2 class="consent-app__name">{{ consentData.appName }}</h2>
-          <p class="consent-app__desc">请求获取你的以下权限</p>
+          <p class="consent-app__desc">正在请求访问你的账户信息</p>
+        </div>
+
+        <!-- 分隔线 -->
+        <div class="consent-divider">
+          <span>该应用将获得以下权限</span>
         </div>
 
         <!-- Scope 列表 -->
         <div class="consent-scopes">
-          <div v-for="scope in consentData.scopes" :key="scope.code" class="consent-scopes__item">
-            <icon-check-circle-fill class="consent-scopes__icon" />
-            <div class="consent-scopes__text">
+          <div v-for="(scope, index) in consentData.scopes" :key="scope.code" class="consent-scopes__item" :style="{ animationDelay: `${index * 80}ms` }">
+            <div class="consent-scopes__icon-wrapper">
+              <icon-check-circle-fill class="consent-scopes__icon" />
+            </div>
+            <div class="consent-scopes__content">
               <span class="consent-scopes__name">{{ scope.name }}</span>
-              <span class="consent-scopes__code">{{ scope.code }}</span>
+              <span class="consent-scopes__desc">{{ scope.description || scope.code }}</span>
             </div>
           </div>
         </div>
 
+        <!-- 授权提示 -->
+        <p class="consent-hint">授权后，该应用将在允许的范围内访问你的信息。你可以随时在账户设置中撤销授权。</p>
+
         <!-- 操作按钮 -->
         <div class="consent-actions">
-          <a-button :loading="submitting" :disabled="submitting" size="large" @click="handleDeny">拒绝</a-button>
-          <a-button type="primary" :loading="submitting" :disabled="submitting" size="large" @click="handleApprove">同意授权</a-button>
+          <a-button class="consent-actions__deny" :loading="submitting" :disabled="submitting" size="large" @click="handleDeny">
+            拒绝
+          </a-button>
+          <a-button class="consent-actions__approve" type="primary" :loading="submitting" :disabled="submitting" size="large" @click="handleApprove">
+            <icon-check style="margin-right: 4px" />
+            同意授权
+          </a-button>
         </div>
 
         <!-- 当前账号 -->
         <div class="consent-footer">
-          <span>当前登录：{{ currentUser }}</span>
-          <a-link @click="handleSwitchAccount">切换账号</a-link>
+          <div class="consent-footer__user">
+            <icon-user :size="14" />
+            <span>{{ currentUser }}</span>
+          </div>
+          <a-link :hoverable="false" @click="handleSwitchAccount">切换账号</a-link>
         </div>
       </template>
     </div>
@@ -190,7 +224,9 @@ onMounted(() => {
     <!-- 底部品牌标识 -->
     <div class="consent-brand">
       <img src="/logo.svg" alt="Heimdall" class="consent-brand__logo" />
-      <span class="consent-brand__text">Heimdall 统一认证中心</span>
+      <span class="consent-brand__text">Heimdall</span>
+      <span class="consent-brand__divider"></span>
+      <span class="consent-brand__slogan">统一认证中心</span>
     </div>
   </div>
 </template>
@@ -202,18 +238,28 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-1);
-  padding: 16px;
+  padding: 24px 16px;
   position: relative;
+  overflow: hidden;
+  background: var(--color-bg-1);
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(var(--primary-6), 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(var(--primary-6), 0.04) 0%, transparent 50%);
+    pointer-events: none;
+  }
 }
 
 .consent-theme-toggle {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   border: 1px solid var(--color-border-2);
   background: var(--color-bg-2);
   color: var(--color-text-2);
@@ -221,72 +267,122 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
 
   &:hover {
     border-color: rgb(var(--primary-6));
     color: rgb(var(--primary-6));
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(var(--primary-6), 0.15);
   }
 }
 
 .consent-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   background: var(--color-bg-2);
-  border-radius: 12px;
-  padding: 40px 32px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 36px 32px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 12px 40px rgba(0, 0, 0, 0.04);
   position: relative;
-  overflow: hidden;
+  z-index: 1;
+  border: 1px solid var(--color-border-1);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &__accent {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, rgb(var(--primary-6)), rgb(var(--primary-4)));
+  &--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 
   @media (max-width: 480px) {
-    padding: 32px 16px;
-    border-radius: 8px;
+    padding: 28px 20px;
+    border-radius: 12px;
   }
 }
 
-.consent-app {
+.consent-loading {
   text-align: center;
-  margin-bottom: 24px;
+  padding: 40px 0;
 
-  &__logo {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-    object-fit: cover;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  &__logo-fallback {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-    background: rgb(var(--primary-6));
-    color: #fff;
-    font-size: 26px;
-    font-weight: 600;
+  &__shield {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-fill-2);
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 16px;
-    box-shadow: 0 2px 8px rgba(var(--primary-6), 0.3);
+    color: var(--color-text-3);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  &__text {
+    font-size: 14px;
+    color: var(--color-text-3);
+    margin: 0;
+  }
+}
+
+.consent-security {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: rgb(var(--success-6));
+  background: rgba(var(--success-6), 0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.consent-app {
+  text-align: center;
+  margin-bottom: 20px;
+
+  &__logo-wrapper {
+    margin-bottom: 16px;
+  }
+
+  &__logo {
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 2px solid var(--color-border-1);
+  }
+
+  &__logo-fallback {
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgb(var(--primary-5)), rgb(var(--primary-7)));
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 4px 12px rgba(var(--primary-6), 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    letter-spacing: -0.5px;
   }
 
   &__name {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--color-text-1);
     margin: 0 0 6px;
+    letter-spacing: -0.3px;
   }
 
   &__desc {
@@ -296,46 +392,85 @@ onMounted(() => {
   }
 }
 
+.consent-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0 16px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border-2);
+  }
+
+  span {
+    padding: 0 12px;
+    font-size: 12px;
+    color: var(--color-text-4);
+    white-space: nowrap;
+  }
+}
+
 .consent-scopes {
-  background: var(--color-fill-1);
-  border-radius: 8px;
-  padding: 8px 16px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 
   &__item {
     display: flex;
-    align-items: center;
-    padding: 12px 0;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 10px;
+    transition: background 0.2s;
+    animation: fadeInUp 0.3s ease-out both;
 
-    &:not(:last-child) {
-      border-bottom: 1px solid var(--color-border);
+    &:hover {
+      background: var(--color-fill-1);
     }
+
+    & + & {
+      margin-top: 2px;
+    }
+  }
+
+  &__icon-wrapper {
+    margin-right: 12px;
+    margin-top: 2px;
+    flex-shrink: 0;
   }
 
   &__icon {
     color: rgb(var(--success-6));
     font-size: 18px;
-    margin-right: 12px;
-    flex-shrink: 0;
   }
 
-  &__text {
+  &__content {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    flex-direction: column;
+    gap: 2px;
   }
 
   &__name {
     font-size: 14px;
     color: var(--color-text-1);
     font-weight: 500;
+    line-height: 1.4;
   }
 
-  &__code {
+  &__desc {
     font-size: 12px;
-    color: var(--color-text-4);
-    font-family: monospace;
+    color: var(--color-text-3);
+    line-height: 1.4;
   }
+}
+
+.consent-hint {
+  font-size: 12px;
+  color: var(--color-text-4);
+  text-align: center;
+  margin: 0 0 24px;
+  line-height: 1.6;
+  padding: 0 8px;
 }
 
 .consent-actions {
@@ -343,48 +478,100 @@ onMounted(() => {
   gap: 12px;
   margin-bottom: 20px;
 
-  .arco-btn {
+  &__deny,
+  &__approve {
     flex: 1;
+    border-radius: 10px !important;
+    font-weight: 500;
+  }
+
+  &__approve {
+    box-shadow: 0 2px 8px rgba(var(--primary-6), 0.3);
   }
 }
 
 .consent-footer {
-  text-align: center;
-  font-size: 13px;
-  color: var(--color-text-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-1);
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--color-text-3);
+  }
 
   .arco-link {
-    margin-left: 8px;
     font-size: 13px;
   }
 }
 
 .consent-error {
   text-align: center;
-  padding: 20px 0;
+  padding: 32px 0;
+
+  &__icon {
+    color: rgb(var(--warning-6));
+    margin-bottom: 12px;
+  }
 
   &__msg {
     font-size: 14px;
     color: var(--color-text-2);
-    margin: 16px 0 24px;
+    margin: 0 0 24px;
+    line-height: 1.6;
   }
 }
 
 .consent-brand {
-  margin-top: 32px;
+  margin-top: 36px;
   display: flex;
   align-items: center;
   gap: 8px;
-  opacity: 0.5;
+  z-index: 1;
 
   &__logo {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
+    opacity: 0.6;
   }
 
   &__text {
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 600;
     color: var(--color-text-3);
+    letter-spacing: -0.2px;
+  }
+
+  &__divider {
+    width: 1px;
+    height: 12px;
+    background: var(--color-border-2);
+  }
+
+  &__slogan {
+    font-size: 12px;
+    color: var(--color-text-4);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.7; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
