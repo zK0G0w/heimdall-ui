@@ -104,8 +104,6 @@ const columns: ColumnItem[] = reactive([
         { label: 'Authorization Code', value: 'authorization_code' },
         { label: 'Client Credentials', value: 'client_credentials' },
         { label: 'Refresh Token', value: 'refresh_token' },
-        { label: 'Implicit', value: 'implicit' },
-        { label: 'Password', value: 'password' },
       ],
     },
   },
