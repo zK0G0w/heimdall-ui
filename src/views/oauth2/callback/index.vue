@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { Message } from '@arco-design/web-vue'
+import axios from 'axios'
 import { useRoute } from 'vue-router'
-import http from '@/utils/http'
 
 defineOptions({ name: 'Oauth2Callback' })
 
 const route = useRoute()
 
-const CLIENT_ID = 'acb0588ffbb34b96b50d7f767d499779'
-const CLIENT_SECRET = '9a5e2fcdd64348e5a1b3c768b8f24012'
-const REDIRECT_URI = 'http://localhost:5173/oauth2/callback'
+const clientConfig = reactive({
+  clientId: 'acb0588ffbb34b96b50d7f767d499779',
+  clientSecret: '',
+  redirectUri: 'http://localhost:5173/oauth2/callback',
+})
 
 const code = computed(() => (route.query.code as string) || '')
 const state = computed(() => (route.query.state as string) || '')
@@ -21,44 +23,69 @@ const tokenResult = ref<any>(null)
 const userInfoResult = ref<any>(null)
 const tokenError = ref('')
 
+const rawHttp = axios.create({
+  baseURL: import.meta.env.VITE_API_PREFIX ?? import.meta.env.VITE_API_BASE_URL,
+  timeout: 30000,
+})
+
 const exchangeToken = async () => {
   if (!code.value) return
+  if (!clientConfig.clientSecret) {
+    Message.warning('请填写 Client Secret')
+    return
+  }
   loading.value = true
   tokenError.value = ''
+  tokenResult.value = null
+  userInfoResult.value = null
   try {
     const params = new URLSearchParams()
     params.append('grant_type', 'authorization_code')
     params.append('code', code.value)
-    params.append('client_id', CLIENT_ID)
-    params.append('client_secret', CLIENT_SECRET)
-    params.append('redirect_uri', REDIRECT_URI)
+    params.append('client_id', clientConfig.clientId)
+    params.append('client_secret', clientConfig.clientSecret)
+    params.append('redirect_uri', clientConfig.redirectUri)
 
-    const { data } = await http.post<any>('/oauth2/token', params)
-    tokenResult.value = data
+    const { data } = await rawHttp.post('/oauth2/token', params)
+    if (data.data?.error) {
+      tokenError.value = `${data.data.error}: ${data.data.error_description || '未知错误'}`
+    } else if (data.data) {
+      tokenResult.value = data.data
+    } else {
+      tokenResult.value = data
+    }
   } catch (e: any) {
-    tokenError.value = e?.response?.data?.error_description || e?.message || '换码失败'
+    const respData = e?.response?.data
+    if (respData?.data?.error) {
+      tokenError.value = `${respData.data.error}: ${respData.data.error_description || ''}`
+    } else if (respData?.msg) {
+      tokenError.value = respData.msg
+    } else {
+      tokenError.value = e?.message || '换码失败'
+    }
   } finally {
     loading.value = false
   }
 }
 
 const fetchUserInfo = async () => {
-  if (!tokenResult.value?.accessToken) {
+  const accessToken = tokenResult.value?.accessToken || tokenResult.value?.access_token
+  if (!accessToken) {
     Message.warning('请先获取 Access Token')
     return
   }
   try {
-    const { data } = await http.get<any>('/oauth2/userinfo', {}, {
-      headers: { Authorization: `Bearer ${tokenResult.value.accessToken}` },
+    const { data } = await rawHttp.get('/oauth2/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
     })
-    userInfoResult.value = data
+    userInfoResult.value = data.data || data
   } catch {
     Message.error('获取用户信息失败')
   }
 }
 
 onMounted(() => {
-  if (code.value) {
+  if (code.value && clientConfig.clientSecret) {
     exchangeToken()
   }
 })
@@ -68,7 +95,7 @@ onMounted(() => {
   <div class="callback-page">
     <div class="callback-card">
       <h2 class="callback-title">OAuth2 Callback 示例</h2>
-      <p class="callback-subtitle">此页面模拟第三方应用接收授权回调并换取令牌</p>
+      <p class="callback-subtitle">此页面模拟第三方应用接收授权回调并换取令牌（client_secret 仅供调试，生产环境应在后端服务完成换码）</p>
 
       <!-- 错误回调 -->
       <template v-if="errorParam">
@@ -87,6 +114,21 @@ onMounted(() => {
         <a-descriptions-item label="state">{{ state || '-' }}</a-descriptions-item>
       </a-descriptions>
 
+      <!-- 客户端凭据 -->
+      <div class="callback-section-title">客户端凭据</div>
+      <a-form :model="clientConfig" layout="vertical" size="small" style="margin-bottom: 20px">
+        <a-form-item label="Client ID">
+          <a-input v-model="clientConfig.clientId" placeholder="client_id" />
+        </a-form-item>
+        <a-form-item label="Client Secret">
+          <a-input-password v-model="clientConfig.clientSecret" placeholder="创建密钥时获得的明文值" />
+        </a-form-item>
+        <a-form-item label="Redirect URI">
+          <a-input v-model="clientConfig.redirectUri" placeholder="redirect_uri" />
+        </a-form-item>
+        <a-button type="primary" :loading="loading" :disabled="!code" @click="exchangeToken">换取 Token</a-button>
+      </a-form>
+
       <!-- 换码结果 -->
       <template v-if="loading">
         <a-spin tip="正在换取令牌..." style="width: 100%; margin: 16px 0" />
@@ -96,24 +138,23 @@ onMounted(() => {
         <a-alert type="error" style="margin-bottom: 16px">
           {{ tokenError }}
         </a-alert>
-        <a-button @click="exchangeToken">重试换码</a-button>
       </template>
 
       <template v-else-if="tokenResult">
         <a-descriptions :column="1" bordered size="small" style="margin-bottom: 20px" title="Token 响应">
           <a-descriptions-item label="access_token">
-            <a-typography-paragraph :copyable="{ text: tokenResult.accessToken }" style="margin: 0; word-break: break-all;">
-              {{ tokenResult.accessToken }}
+            <a-typography-paragraph :copyable="{ text: tokenResult.accessToken || tokenResult.access_token }" style="margin: 0; word-break: break-all;">
+              {{ tokenResult.accessToken || tokenResult.access_token }}
             </a-typography-paragraph>
           </a-descriptions-item>
           <a-descriptions-item label="refresh_token">
-            <a-typography-paragraph v-if="tokenResult.refreshToken" :copyable="{ text: tokenResult.refreshToken }" style="margin: 0; word-break: break-all;">
-              {{ tokenResult.refreshToken }}
+            <a-typography-paragraph v-if="tokenResult.refreshToken || tokenResult.refresh_token" :copyable="{ text: tokenResult.refreshToken || tokenResult.refresh_token }" style="margin: 0; word-break: break-all;">
+              {{ tokenResult.refreshToken || tokenResult.refresh_token }}
             </a-typography-paragraph>
             <span v-else>-</span>
           </a-descriptions-item>
-          <a-descriptions-item label="token_type">{{ tokenResult.tokenType }}</a-descriptions-item>
-          <a-descriptions-item label="expires_in">{{ tokenResult.expiresIn }} 秒</a-descriptions-item>
+          <a-descriptions-item label="token_type">{{ tokenResult.tokenType || tokenResult.token_type }}</a-descriptions-item>
+          <a-descriptions-item label="expires_in">{{ tokenResult.expiresIn || tokenResult.expires_in }} 秒</a-descriptions-item>
           <a-descriptions-item label="scope">{{ tokenResult.scope }}</a-descriptions-item>
         </a-descriptions>
 
@@ -163,5 +204,12 @@ onMounted(() => {
   font-size: 13px;
   color: var(--color-text-3);
   margin: 0 0 24px;
+}
+
+.callback-section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-1);
+  margin-bottom: 12px;
 }
 </style>
