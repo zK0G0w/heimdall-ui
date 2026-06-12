@@ -575,4 +575,116 @@ onMounted(() => {
     transform: translateY(0);
   }
 }
+
+// 移动端适配
+@media (max-width: 480px) {
+  .consent-page {
+    padding: 16px 12px;
+    justify-content: flex-start;
+    padding-top: 60px;
+  }
+
+  .consent-theme-toggle {
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .consent-card {
+    padding: 24px 16px;
+    border-radius: 12px;
+    max-width: 100%;
+  }
+
+  .consent-security {
+    margin-bottom: 16px;
+  }
+
+  .consent-app {
+    margin-bottom: 16px;
+
+    &__logo,
+    &__logo-fallback {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      font-size: 22px;
+    }
+
+    &__logo-wrapper {
+      margin-bottom: 12px;
+    }
+
+    &__name {
+      font-size: 18px;
+    }
+
+    &__desc {
+      font-size: 13px;
+    }
+  }
+
+  .consent-divider {
+    margin: 16px 0 12px;
+  }
+
+  .consent-scopes {
+    margin-bottom: 16px;
+
+    &__item {
+      padding: 10px 10px;
+    }
+
+    &__name {
+      font-size: 13px;
+    }
+
+    &__desc {
+      font-size: 11px;
+    }
+  }
+
+  .consent-hint {
+    margin-bottom: 20px;
+    font-size: 11px;
+  }
+
+  .consent-actions {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .consent-footer {
+    padding-top: 12px;
+    flex-wrap: wrap;
+    gap: 4px;
+
+    &__user {
+      font-size: 12px;
+    }
+
+    .arco-link {
+      font-size: 12px;
+    }
+  }
+
+  .consent-brand {
+    margin-top: 24px;
+
+    &__logo {
+      width: 18px;
+      height: 18px;
+    }
+
+    &__text {
+      font-size: 12px;
+    }
+
+    &__slogan {
+      font-size: 11px;
+    }
+  }
+}
 </style>
