@@ -2,17 +2,19 @@
 import { Message } from '@arco-design/web-vue'
 import { useRoute } from 'vue-router'
 import { type Oauth2ConsentData, approveConsent, denyConsent, getConsentInfo } from '@/apis/oauth2/consent'
-import { useUserStore } from '@/stores'
+import { useAppStore, useUserStore } from '@/stores'
 
 defineOptions({ name: 'Oauth2Authorize' })
 
 const route = useRoute()
 const userStore = useUserStore()
+const appStore = useAppStore()
 
 const loading = ref(true)
 const submitting = ref(false)
 const error = ref('')
 const consentData = ref<Oauth2ConsentData>()
+const isDark = ref(false)
 
 const authReqId = computed(() => (route.query.auth_req_id as string) || '')
 
@@ -22,6 +24,29 @@ const appInitial = computed(() => {
   const name = consentData.value?.appName || ''
   return name.charAt(0)
 })
+
+const applyTheme = () => {
+  if (isDark.value) {
+    document.body.setAttribute('arco-theme', 'dark')
+  } else {
+    document.body.removeAttribute('arco-theme')
+  }
+}
+
+const initTheme = () => {
+  if (appStore.theme) {
+    isDark.value = appStore.theme === 'dark'
+  } else {
+    isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+  applyTheme()
+}
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  applyTheme()
+  appStore.toggleTheme(isDark.value)
+}
 
 const fetchConsentInfo = async () => {
   if (!authReqId.value) {
@@ -81,13 +106,23 @@ const handleRetry = () => {
 }
 
 onMounted(() => {
+  initTheme()
   fetchConsentInfo()
 })
 </script>
 
 <template>
   <div class="consent-page">
+    <!-- 主题切换按钮 -->
+    <button class="consent-theme-toggle" :title="isDark ? '切换到亮色模式' : '切换到暗色模式'" @click="toggleTheme">
+      <icon-sun-fill v-if="isDark" :size="18" />
+      <icon-moon-fill v-else :size="18" />
+    </button>
+
     <div class="consent-card">
+      <!-- 卡片顶部装饰线 -->
+      <div class="consent-card__accent"></div>
+
       <!-- 加载中 -->
       <template v-if="loading">
         <a-space direction="vertical" fill :size="16" style="width: 100%">
@@ -130,7 +165,7 @@ onMounted(() => {
         <!-- Scope 列表 -->
         <div class="consent-scopes">
           <div v-for="scope in consentData.scopes" :key="scope.code" class="consent-scopes__item">
-            <span class="consent-scopes__dot"></span>
+            <icon-check-circle-fill class="consent-scopes__icon" />
             <div class="consent-scopes__text">
               <span class="consent-scopes__name">{{ scope.name }}</span>
               <span class="consent-scopes__code">{{ scope.code }}</span>
@@ -140,8 +175,8 @@ onMounted(() => {
 
         <!-- 操作按钮 -->
         <div class="consent-actions">
-          <a-button :loading="submitting" :disabled="submitting" @click="handleDeny">拒绝</a-button>
-          <a-button type="primary" :loading="submitting" :disabled="submitting" @click="handleApprove">同意授权</a-button>
+          <a-button :loading="submitting" :disabled="submitting" size="large" @click="handleDeny">拒绝</a-button>
+          <a-button type="primary" :loading="submitting" :disabled="submitting" size="large" @click="handleApprove">同意授权</a-button>
         </div>
 
         <!-- 当前账号 -->
@@ -151,6 +186,12 @@ onMounted(() => {
         </div>
       </template>
     </div>
+
+    <!-- 底部品牌标识 -->
+    <div class="consent-brand">
+      <img src="/logo.svg" alt="Heimdall" class="consent-brand__logo" />
+      <span class="consent-brand__text">Heimdall 统一认证中心</span>
+    </div>
   </div>
 </template>
 
@@ -158,10 +199,34 @@ onMounted(() => {
 .consent-page {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: var(--color-bg-1);
   padding: 16px;
+  position: relative;
+}
+
+.consent-theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-2);
+  background: var(--color-bg-2);
+  color: var(--color-text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: rgb(var(--primary-6));
+    color: rgb(var(--primary-6));
+  }
 }
 
 .consent-card {
@@ -170,7 +235,18 @@ onMounted(() => {
   background: var(--color-bg-2);
   border-radius: 12px;
   padding: 40px 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+
+  &__accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, rgb(var(--primary-6)), rgb(var(--primary-4)));
+  }
 
   @media (max-width: 480px) {
     padding: 32px 16px;
@@ -183,32 +259,34 @@ onMounted(() => {
   margin-bottom: 24px;
 
   &__logo {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
     object-fit: cover;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   &__logo-fallback {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
     background: rgb(var(--primary-6));
     color: #fff;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 12px;
+    margin: 0 auto 16px;
+    box-shadow: 0 2px 8px rgba(var(--primary-6), 0.3);
   }
 
   &__name {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: var(--color-text-1);
-    margin: 0 0 4px;
+    margin: 0 0 6px;
   }
 
   &__desc {
@@ -221,24 +299,22 @@ onMounted(() => {
 .consent-scopes {
   background: var(--color-fill-1);
   border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 24px;
+  padding: 8px 16px;
+  margin-bottom: 28px;
 
   &__item {
     display: flex;
     align-items: center;
-    padding: 10px 0;
+    padding: 12px 0;
 
     &:not(:last-child) {
       border-bottom: 1px solid var(--color-border);
     }
   }
 
-  &__dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgb(var(--primary-6));
+  &__icon {
+    color: rgb(var(--success-6));
+    font-size: 18px;
     margin-right: 12px;
     flex-shrink: 0;
   }
@@ -252,11 +328,13 @@ onMounted(() => {
   &__name {
     font-size: 14px;
     color: var(--color-text-1);
+    font-weight: 500;
   }
 
   &__code {
     font-size: 12px;
     color: var(--color-text-4);
+    font-family: monospace;
   }
 }
 
@@ -267,7 +345,6 @@ onMounted(() => {
 
   .arco-btn {
     flex: 1;
-    height: 40px;
   }
 }
 
@@ -290,6 +367,24 @@ onMounted(() => {
     font-size: 14px;
     color: var(--color-text-2);
     margin: 16px 0 24px;
+  }
+}
+
+.consent-brand {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.5;
+
+  &__logo {
+    width: 20px;
+    height: 20px;
+  }
+
+  &__text {
+    font-size: 12px;
+    color: var(--color-text-3);
   }
 }
 </style>

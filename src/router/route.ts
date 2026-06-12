@@ -49,6 +49,12 @@ export const systemRoutes: RouteRecordRaw[] = [
     meta: { hidden: true },
   },
   {
+    path: '/oauth2/callback',
+    name: 'Oauth2Callback',
+    component: () => import('@/views/oauth2/callback/index.vue'),
+    meta: { hidden: true },
+  },
+  {
     path: '/user',
     name: 'User',
     component: Layout,
