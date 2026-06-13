@@ -1,7 +1,7 @@
 <template>
   <div class="grants-tab">
-    <a-space direction="vertical" fill>
-      <a-table :data="grantList" :loading="loading" :pagination="false" row-key="appId">
+    <div class="grants-tab__content">
+      <a-table :data="grantList" :loading="loading" :pagination="false" row-key="appId" :scroll="{ y: 350 }">
         <template #columns>
           <a-table-column title="应用" data-index="appName">
             <template #cell="{ record }">
@@ -23,11 +23,12 @@
           </a-table-column>
         </template>
       </a-table>
-      <a-popconfirm v-if="grantList.length > 0" content="确认撤销所有应用的授权？" @ok="handleRevokeAll">
+    </div>
+    <div v-if="grantList.length > 0" class="grants-tab__footer">
+      <a-popconfirm content="确认撤销所有应用的授权？" @ok="handleRevokeAll">
         <a-button status="danger" long>撤销所有授权</a-button>
       </a-popconfirm>
-      <a-empty v-if="!loading && grantList.length === 0" description="暂无已授权应用" />
-    </a-space>
+    </div>
   </div>
 </template>
 
@@ -64,3 +65,12 @@ const handleRevokeAll = async () => {
 
 onMounted(fetchList)
 </script>
+
+<style scoped>
+.grants-tab__content {
+  height: 380px;
+}
+.grants-tab__footer {
+  padding-top: 12px;
+}
+</style>

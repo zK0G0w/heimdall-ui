@@ -19,10 +19,10 @@ export function listUserGrants() {
 
 /** @desc 撤销指定应用的授权 */
 export function revokeGrant(appId: number) {
-  return http.delete(`${BASE_URL}/${appId}`)
+  return http.del(`${BASE_URL}/${appId}`)
 }
 
 /** @desc 撤销所有应用的授权 */
 export function revokeAllGrants() {
-  return http.delete(BASE_URL)
+  return http.del(BASE_URL)
 }

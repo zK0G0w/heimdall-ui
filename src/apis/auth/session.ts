@@ -3,6 +3,7 @@ import http from '@/utils/http'
 const BASE_URL = '/auth/user/sessions'
 
 export interface UserSessionItem {
+  tokenId: string
   tokenValue: string
   deviceType: string
   loginIp: string
@@ -17,10 +18,10 @@ export function listUserSessions() {
 
 /** @desc 踢出指定会话 */
 export function kickoutSession(token: string) {
-  return http.delete(`${BASE_URL}/${token}`)
+  return http.del(`${BASE_URL}/${token}`)
 }
 
 /** @desc 退出所有其他设备 */
 export function kickoutAllSessions() {
-  return http.delete(BASE_URL)
+  return http.del(BASE_URL)
 }

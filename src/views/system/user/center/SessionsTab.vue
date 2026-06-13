@@ -1,7 +1,7 @@
 <template>
   <div class="sessions-tab">
-    <a-space direction="vertical" fill>
-      <a-table :data="sessionList" :loading="loading" :pagination="false" row-key="tokenValue">
+    <div class="sessions-tab__content">
+      <a-table :data="sessionList" :loading="loading" :pagination="false" row-key="tokenValue" :scroll="{ y: 350 }">
         <template #columns>
           <a-table-column title="设备类型" data-index="deviceType" />
           <a-table-column title="登录 IP" data-index="loginIp" />
@@ -16,7 +16,7 @@
               <a-popconfirm
                 v-if="!record.isCurrent"
                 content="确认踢出该设备？"
-                @ok="handleKickout(record.tokenValue)"
+                @ok="handleKickout(record.tokenId)"
               >
                 <a-button type="text" status="danger" size="small">踢出</a-button>
               </a-popconfirm>
@@ -25,14 +25,12 @@
           </a-table-column>
         </template>
       </a-table>
-      <a-popconfirm
-        v-if="sessionList.length > 1"
-        content="确认退出所有其他设备？"
-        @ok="handleKickoutAll"
-      >
+    </div>
+    <div v-if="sessionList.length > 1" class="sessions-tab__footer">
+      <a-popconfirm content="确认退出所有其他设备？" @ok="handleKickoutAll">
         <a-button status="warning" long>退出所有其他设备</a-button>
       </a-popconfirm>
-    </a-space>
+    </div>
   </div>
 </template>
 
@@ -55,8 +53,8 @@ const fetchList = async () => {
   }
 }
 
-const handleKickout = async (tokenValue: string) => {
-  await kickoutSession(tokenValue)
+const handleKickout = async (tokenId: string) => {
+  await kickoutSession(tokenId)
   Message.success('已踢出')
   fetchList()
 }
@@ -69,3 +67,12 @@ const handleKickoutAll = async () => {
 
 onMounted(fetchList)
 </script>
+
+<style scoped>
+.sessions-tab__content {
+  height: 380px;
+}
+.sessions-tab__footer {
+  padding-top: 12px;
+}
+</style>

@@ -58,6 +58,10 @@ const fetchConsentInfo = async () => {
   }
   try {
     const { data } = await getConsentInfo(authReqId.value)
+    if ((data as any).error) {
+      error.value = (data as any).error_description || '授权请求异常，请返回应用重新发起'
+      return
+    }
     if (!data.needConsent && data.redirectUrl) {
       window.location.href = data.redirectUrl
       return
@@ -81,6 +85,11 @@ const handleApprove = async () => {
   submitting.value = true
   try {
     const { data } = await approveConsent(authReqId.value)
+    if ((data as any).error) {
+      Message.error((data as any).error_description || '授权失败')
+      submitting.value = false
+      return
+    }
     window.location.href = data.redirectUrl
   } catch {
     Message.error('授权操作失败，请重试')
@@ -92,6 +101,11 @@ const handleDeny = async () => {
   submitting.value = true
   try {
     const { data } = await denyConsent(authReqId.value)
+    if ((data as any).error) {
+      Message.error((data as any).error_description || '操作失败')
+      submitting.value = false
+      return
+    }
     window.location.href = data.redirectUrl
   } catch {
     Message.error('操作失败，请重试')
