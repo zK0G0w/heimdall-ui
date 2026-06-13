@@ -29,6 +29,12 @@
             :auto-size="{ minRows: 3, maxRows: 5 }"
           />
         </a-form-item>
+        <a-form-item label="强制 MFA" field="forceMfa" help="开启后该角色下的用户登录时必须完成 MFA 验证">
+          <a-switch v-model="form.forceMfa" type="round" :checked-value="true" :unchecked-value="false">
+            <template #checked>是</template>
+            <template #unchecked>否</template>
+          </a-switch>
+        </a-form-item>
       </fieldset>
       <fieldset>
         <legend>数据权限</legend>
@@ -94,6 +100,7 @@ const [form, resetForm] = useResetReactive({
   deptCheckStrictly: true,
   sort: 999,
   dataScope: 4,
+  forceMfa: false,
 })
 
 const deptTreeRef = ref()

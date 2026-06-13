@@ -19,9 +19,6 @@
             <a-tab-pane key="sessions" title="活跃会话">
               <SessionsTab />
             </a-tab-pane>
-            <a-tab-pane key="mfa" title="多因素认证">
-              <MfaTab />
-            </a-tab-pane>
           </a-tabs>
         </a-card>
       </a-col>
@@ -31,7 +28,6 @@
 
 <script setup lang="ts">
 import LeftBox from './BasicInfo.vue'
-import MfaTab from './MfaTab.vue'
 import RightBox from './Social.vue'
 import PasswordPolicy from './Security.vue'
 import GrantsTab from '@/views/system/user/center/GrantsTab.vue'

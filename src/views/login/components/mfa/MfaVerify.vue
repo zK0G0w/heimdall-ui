@@ -1,19 +1,24 @@
 <template>
   <div class="mfa-verify">
-    <div class="mfa-verify__header">
-      <h3 class="title">多因素认证</h3>
-      <p class="desc">请输入身份验证器应用中的 6 位验证码</p>
+    <div class="mfa-verify__icon">
+      <div class="icon-ring">
+        <icon-safe :size="36" />
+      </div>
     </div>
 
-    <div v-if="!useRecovery" class="mfa-verify__input">
-      <a-input
+    <div class="mfa-verify__header">
+      <h3 class="title">身份验证</h3>
+      <p class="desc">
+        {{ useRecovery ? '请输入一组恢复码完成验证' : '请输入验证器应用中的 6 位动态码' }}
+      </p>
+    </div>
+
+    <div v-if="!useRecovery" class="mfa-verify__body">
+      <MfaCodeInput
         ref="codeInputRef"
         v-model="code"
-        placeholder="请输入 6 位验证码"
-        :max-length="6"
-        size="large"
-        allow-clear
-        @press-enter="handleVerify"
+        :disabled="loading"
+        @complete="handleVerify"
       />
       <a-button
         type="primary"
@@ -21,19 +26,21 @@
         long
         :loading="loading"
         :disabled="code.length !== 6"
-        class="mt-4"
+        class="verify-btn"
         @click="handleVerify"
       >
         验证
       </a-button>
     </div>
 
-    <div v-else class="mfa-verify__input">
+    <div v-else class="mfa-verify__body">
       <a-input
+        ref="recoveryInputRef"
         v-model="recoveryCode"
-        placeholder="请输入恢复码"
+        placeholder="例如：ABCD1234"
         size="large"
         allow-clear
+        class="recovery-input"
         @press-enter="handleRecoveryVerify"
       />
       <a-button
@@ -42,24 +49,32 @@
         long
         :loading="loading"
         :disabled="!recoveryCode"
-        class="mt-4"
+        class="verify-btn"
         @click="handleRecoveryVerify"
       >
         验证
       </a-button>
     </div>
 
+    <a-divider class="divider" />
+
     <div class="mfa-verify__footer">
-      <a-link @click="useRecovery = !useRecovery">
-        {{ useRecovery ? '使用验证码' : '使用恢复码' }}
+      <a-link class="link" @click="useRecovery = !useRecovery">
+        <icon-swap v-if="!useRecovery" :size="14" />
+        <icon-code v-else :size="14" />
+        {{ useRecovery ? '使用动态码' : '使用恢复码' }}
       </a-link>
-      <a-link @click="$emit('back')">返回重新登录</a-link>
+      <a-link class="link" @click="$emit('back')">
+        <icon-arrow-left :size="14" />
+        返回登录
+      </a-link>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue'
+import MfaCodeInput from './MfaCodeInput.vue'
 import { mfaVerify } from '@/apis/auth/mfa'
 import type { LoginResp } from '@/apis/auth/type'
 
@@ -76,7 +91,8 @@ const code = ref('')
 const recoveryCode = ref('')
 const useRecovery = ref(false)
 const loading = ref(false)
-const codeInputRef = ref()
+const codeInputRef = ref<InstanceType<typeof MfaCodeInput>>()
+const recoveryInputRef = ref()
 
 const handleVerify = async () => {
   if (code.value.length !== 6) return
@@ -85,8 +101,7 @@ const handleVerify = async () => {
     const { data } = await mfaVerify(props.challengeToken, code.value, 'totp')
     emit('success', data)
   } catch {
-    code.value = ''
-    nextTick(() => codeInputRef.value?.focus())
+    codeInputRef.value?.shake()
   } finally {
     loading.value = false
   }
@@ -100,6 +115,7 @@ const handleRecoveryVerify = async () => {
     emit('success', data)
   } catch {
     recoveryCode.value = ''
+    nextTick(() => recoveryInputRef.value?.focus())
   } finally {
     loading.value = false
   }
@@ -112,34 +128,83 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .mfa-verify {
-  padding: 20px 0;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &__icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+
+    .icon-ring {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(var(--primary-1), 0.8), rgba(var(--primary-2), 0.6));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgb(var(--primary-6));
+      box-shadow: 0 4px 16px rgba(var(--primary-6), 0.15);
+    }
+  }
 
   &__header {
-    margin-bottom: 24px;
+    text-align: center;
+    margin-bottom: 28px;
 
     .title {
-      font-size: 20px;
-      font-weight: 500;
+      font-size: 22px;
+      font-weight: 600;
       color: var(--color-text-1);
       margin-bottom: 8px;
+      letter-spacing: 0.5px;
     }
 
     .desc {
       font-size: 14px;
       color: var(--color-text-3);
+      line-height: 1.5;
     }
   }
 
-  &__input {
-    .mt-4 {
-      margin-top: 16px;
+  &__body {
+    width: 100%;
+
+    .verify-btn {
+      margin-top: 24px;
+      height: 42px;
+      border-radius: 8px;
+      font-weight: 500;
     }
+
+    .recovery-input {
+      :deep(.arco-input) {
+        text-align: center;
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 16px;
+        letter-spacing: 2px;
+      }
+    }
+  }
+
+  .divider {
+    margin: 24px 0 16px;
   }
 
   &__footer {
+    width: 100%;
     display: flex;
     justify-content: space-between;
-    margin-top: 16px;
+
+    .link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+    }
   }
 }
 </style>

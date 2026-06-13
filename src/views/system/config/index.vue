@@ -43,6 +43,7 @@ import MailConfig from './mail/index.vue'
 import SmsConfig from './sms/index.vue'
 import StorageConfig from './storage/index.vue'
 import ClientConfig from './client/index.vue'
+import MfaConfig from './mfa/index.vue'
 import { useDevice } from '@/hooks'
 import has from '@/utils/has'
 
@@ -53,6 +54,7 @@ const { isDesktop } = useDevice()
 const data = [
   { name: '网站配置', key: 'site', icon: 'apps', permissions: ['system:siteConfig:get'], value: SiteConfig },
   { name: '安全配置', key: 'security', icon: 'safe', permissions: ['system:securityConfig:get'], value: SecurityConfig },
+  { name: 'MFA 配置', key: 'mfa', icon: 'lock', permissions: ['system:securityConfig:get'], value: MfaConfig },
   { name: '登录配置', key: 'login', icon: 'lock', permissions: ['system:loginConfig:get'], value: LoginConfig },
   { name: '邮件配置', key: 'mail', icon: 'email', permissions: ['system:mailConfig:get'], value: MailConfig },
   { name: '短信配置', key: 'sms', icon: 'message', permissions: ['system:smsConfig:list'], value: SmsConfig },

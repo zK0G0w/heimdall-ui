@@ -4,6 +4,7 @@
     title="绑定多因素认证"
     :footer="false"
     :mask-closable="false"
+    :unmount-on-close="true"
     width="480px"
     @cancel="handleCancel"
   >
