@@ -80,11 +80,28 @@ export interface EmailLoginReq extends AuthReq {
 
 /** 登录响应类型 */
 export interface LoginResp {
-  token: string
-  tenantId: string
+  token?: string
+  tenantId?: string
+  requiresMfa?: boolean
+  requiresMfaSetup?: boolean
+  mfaChallengeToken?: string
 }
 
 /** 第三方登录授权类型 */
 export interface SocialAuthAuthorizeResp {
   authorizeUrl: string
+}
+
+/** MFA 绑定初始化响应 */
+export interface MfaSetupResp {
+  secret: string
+  qrcodeUri: string
+}
+
+/** MFA 状态响应 */
+export interface MfaStatusResp {
+  enabled: boolean
+  type: string
+  forced: boolean
+  remainingBackupCodes: number
 }

@@ -54,3 +54,5 @@ export const getUserInfo = () => {
 export const getUserRoute = () => {
   return http.get<T.RouteItem[]>(`${BASE_URL}/user/route`)
 }
+
+export * from './mfa'
