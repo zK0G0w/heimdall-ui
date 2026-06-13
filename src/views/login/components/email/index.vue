@@ -43,10 +43,15 @@
 
 <script setup lang="ts">
 import { type FormInstance, Message } from '@arco-design/web-vue'
+import type { LoginResp } from '@/apis/auth/type'
 import type { BehaviorCaptchaReq } from '@/apis'
 // import { type BehaviorCaptchaReq, getEmailCaptcha } from '@/apis'
 import { useTabsStore, useTenantStore, useUserStore } from '@/stores'
 import * as Regexp from '@/utils/regexp'
+
+const emit = defineEmits<{
+  'mfa-required': [resp: LoginResp]
+}>()
 
 const formRef = ref<FormInstance>()
 const form = reactive({
@@ -74,7 +79,13 @@ const handleLogin = async () => {
     const isInvalid = await formRef.value?.validate()
     if (isInvalid) return
     loading.value = true
-    await userStore.emailLogin(form, tenantCode.value)
+    const loginResp = await userStore.emailLogin(form, tenantCode.value)
+
+    if (loginResp.requiresMfa || loginResp.requiresMfaSetup) {
+      emit('mfa-required', loginResp)
+      return
+    }
+
     tabsStore.reset()
     const { redirect, ...othersQuery } = router.currentRoute.value.query
 

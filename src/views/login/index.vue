@@ -14,32 +14,47 @@
       </a-col>
       <a-col :xs="24" :sm="12" :md="11">
         <div class="login-right">
-          <h3 v-if="isEmailLogin" class="login-right__title">邮箱登录</h3>
-          <EmailLogin v-if="isEmailLogin" />
-          <a-tabs v-else v-model:active-key="activeTab" class="login-right__form">
-            <a-tab-pane key="1" title="账号登录">
-              <component :is="AccountLogin" v-if="activeTab === '1'" />
-            </a-tab-pane>
-            <a-tab-pane key="2" title="手机号登录">
-              <component :is="PhoneLogin" v-if="activeTab === '2'" />
-            </a-tab-pane>
-          </a-tabs>
-          <div class="login-right__oauth">
-            <a-divider orientation="center">其他登录方式</a-divider>
-            <div class="list">
-              <div v-if="isEmailLogin" class="mode item" @click="toggleLoginMode"><icon-user /> 账号/手机号登录</div>
-              <div v-else class="mode item" @click="toggleLoginMode"><icon-email /> 邮箱登录</div>
-              <a class="item" title="使用 Gitee 账号登录" @click="onOauth('gitee')">
-                <GiSvgIcon name="gitee" :size="24" />
-              </a>
-              <a class="item" title="使用 GitHub 账号登录" @click="onOauth('github')">
-                <GiSvgIcon name="github" :size="24" />
-              </a>
-              <a class="item" title="使用微信账号登录" @click="onOauth('wechat_open')">
-                <GiSvgIcon name="wechat" :size="24" />
-              </a>
+          <template v-if="loginPhase === 'credentials'">
+            <h3 v-if="isEmailLogin" class="login-right__title">邮箱登录</h3>
+            <EmailLogin v-if="isEmailLogin" @mfa-required="handleMfaRequired" />
+            <a-tabs v-else v-model:active-key="activeTab" class="login-right__form">
+              <a-tab-pane key="1" title="账号登录">
+                <component :is="AccountLogin" v-if="activeTab === '1'" @mfa-required="handleMfaRequired" />
+              </a-tab-pane>
+              <a-tab-pane key="2" title="手机号登录">
+                <component :is="PhoneLogin" v-if="activeTab === '2'" @mfa-required="handleMfaRequired" />
+              </a-tab-pane>
+            </a-tabs>
+            <div class="login-right__oauth">
+              <a-divider orientation="center">其他登录方式</a-divider>
+              <div class="list">
+                <div v-if="isEmailLogin" class="mode item" @click="toggleLoginMode"><icon-user /> 账号/手机号登录</div>
+                <div v-else class="mode item" @click="toggleLoginMode"><icon-email /> 邮箱登录</div>
+                <a class="item" title="使用 Gitee 账号登录" @click="onOauth('gitee')">
+                  <GiSvgIcon name="gitee" :size="24" />
+                </a>
+                <a class="item" title="使用 GitHub 账号登录" @click="onOauth('github')">
+                  <GiSvgIcon name="github" :size="24" />
+                </a>
+                <a class="item" title="使用微信账号登录" @click="onOauth('wechat_open')">
+                  <GiSvgIcon name="wechat" :size="24" />
+                </a>
+              </div>
             </div>
-          </div>
+          </template>
+          <MfaVerify
+            v-else-if="loginPhase === 'mfa-verify'"
+            :challenge-token="mfaChallengeToken"
+            @success="handleMfaSuccess"
+            @back="handleMfaBack"
+          />
+          <MfaSetup
+            v-else-if="loginPhase === 'mfa-setup'"
+            :challenge-token="mfaChallengeToken"
+            mode="login"
+            @success="handleMfaSuccess"
+            @cancel="handleMfaBack"
+          />
         </div>
       </a-col>
     </a-row>
@@ -63,20 +78,35 @@
     <a-row align="stretch" class="login-box">
       <a-col :xs="24" :sm="12" :md="11">
         <div class="login-right">
-          <h3 v-if="isEmailLogin" class="login-right__title">邮箱登录</h3>
-          <EmailLogin v-if="isEmailLogin" />
-          <a-tabs v-else v-model:active-key="activeTab" class="login-right__form">
-            <a-tab-pane key="1" title="账号登录">
-              <component :is="AccountLogin" v-if="activeTab === '1'" />
-            </a-tab-pane>
-            <a-tab-pane key="2" title="手机号登录">
-              <component :is="PhoneLogin" v-if="activeTab === '2'" />
-            </a-tab-pane>
-          </a-tabs>
+          <template v-if="loginPhase === 'credentials'">
+            <h3 v-if="isEmailLogin" class="login-right__title">邮箱登录</h3>
+            <EmailLogin v-if="isEmailLogin" @mfa-required="handleMfaRequired" />
+            <a-tabs v-else v-model:active-key="activeTab" class="login-right__form">
+              <a-tab-pane key="1" title="账号登录">
+                <component :is="AccountLogin" v-if="activeTab === '1'" @mfa-required="handleMfaRequired" />
+              </a-tab-pane>
+              <a-tab-pane key="2" title="手机号登录">
+                <component :is="PhoneLogin" v-if="activeTab === '2'" @mfa-required="handleMfaRequired" />
+              </a-tab-pane>
+            </a-tabs>
+          </template>
+          <MfaVerify
+            v-else-if="loginPhase === 'mfa-verify'"
+            :challenge-token="mfaChallengeToken"
+            @success="handleMfaSuccess"
+            @back="handleMfaBack"
+          />
+          <MfaSetup
+            v-else-if="loginPhase === 'mfa-setup'"
+            :challenge-token="mfaChallengeToken"
+            mode="login"
+            @success="handleMfaSuccess"
+            @cancel="handleMfaBack"
+          />
         </div>
       </a-col>
     </a-row>
-    <div class="login-right__oauth">
+    <div v-if="loginPhase === 'credentials'" class="login-right__oauth">
       <a-divider orientation="center">其他登录方式</a-divider>
       <div class="list">
         <div v-if="isEmailLogin" class="mode item" @click="toggleLoginMode"><icon-user /> 账号/手机号登录</div>
@@ -101,16 +131,21 @@ import Background from './components/background/index.vue'
 import AccountLogin from './components/account/index.vue'
 import PhoneLogin from './components/phone/index.vue'
 import EmailLogin from './components/email/index.vue'
+import MfaVerify from './components/mfa/MfaVerify.vue'
+import MfaSetup from './components/mfa/MfaSetup.vue'
+import type { LoginResp } from '@/apis/auth/type'
 import { socialAuth } from '@/apis/auth'
 import { useAppStore } from '@/stores'
 import { useTenantStore } from '@/stores/modules/tenant'
 import { useDevice } from '@/hooks'
 import { getTenantIdByDomain, getTenantStatus } from '@/apis'
+import { setToken } from '@/utils/auth'
 
 defineOptions({ name: 'Login' })
 
 const appStore = useAppStore()
 const tenantStore = useTenantStore()
+const router = useRouter()
 
 const { isDesktop } = useDevice()
 const title = computed(() => appStore.getTitle())
@@ -118,6 +153,30 @@ const logo = computed(() => appStore.getLogo())
 
 const isEmailLogin = ref(false)
 const activeTab = ref('1')
+
+const loginPhase = ref<'credentials' | 'mfa-verify' | 'mfa-setup'>('credentials')
+const mfaChallengeToken = ref('')
+
+const handleMfaRequired = (resp: LoginResp) => {
+  if (resp.requiresMfa) {
+    mfaChallengeToken.value = resp.mfaChallengeToken!
+    loginPhase.value = 'mfa-verify'
+  } else if (resp.requiresMfaSetup) {
+    mfaChallengeToken.value = resp.mfaChallengeToken!
+    loginPhase.value = 'mfa-setup'
+  }
+}
+
+const handleMfaSuccess = (resp: LoginResp) => {
+  setToken(resp.token!)
+  tenantStore.setTenantId(resp.tenantId)
+  router.push('/')
+}
+
+const handleMfaBack = () => {
+  loginPhase.value = 'credentials'
+  mfaChallengeToken.value = ''
+}
 
 // 切换登录模式
 const toggleLoginMode = () => {

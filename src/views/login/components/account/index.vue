@@ -44,8 +44,13 @@
 import { type FormInstance, Message } from '@arco-design/web-vue'
 import { useStorage } from '@vueuse/core'
 import { getImageCaptcha } from '@/apis/common'
+import type { LoginResp } from '@/apis/auth/type'
 import { useTabsStore, useTenantStore, useUserStore } from '@/stores'
 import { encryptByRsa } from '@/utils/encrypt'
+
+const emit = defineEmits<{
+  'mfa-required': [resp: LoginResp]
+}>()
 
 const loginConfig = useStorage('login-config', {
   rememberMe: true,
@@ -120,12 +125,18 @@ const handleLogin = async () => {
     if (isInvalid) return
     loading.value = true
 
-    await userStore.accountLogin({
+    const loginResp = await userStore.accountLogin({
       username: form.username,
       password: encryptByRsa(form.password) || '',
       captcha: form.captcha,
       uuid: form.uuid,
     }, tenantCode.value)
+
+    if (loginResp.requiresMfa || loginResp.requiresMfaSetup) {
+      emit('mfa-required', loginResp)
+      return
+    }
+
     tabsStore.reset()
     const { redirect, ...othersQuery } = router.currentRoute.value.query
     const { rememberMe } = loginConfig.value
