@@ -6,6 +6,7 @@ import {
   type AccountLoginReq,
   AuthTypeConstants,
   type EmailLoginReq,
+  type LoginResp,
   type PhoneLoginReq,
   type UserInfo,
   accountLogin as accountLoginApi,
@@ -52,35 +53,47 @@ const storeSetup = () => {
   }
 
   // 登录
-  const accountLogin = async (req: AccountLoginReq, tenantCode?: string) => {
+  const accountLogin = async (req: AccountLoginReq, tenantCode?: string): Promise<LoginResp> => {
     const res = await accountLoginApi({ ...req, clientId: import.meta.env.VITE_CLIENT_ID, authType: AuthTypeConstants.ACCOUNT }, tenantCode)
-    setToken(res.data.token)
-    tenantStore.setTenantId(res.data.tenantId)
-    token.value = res.data.token
+    if (res.data.token) {
+      setToken(res.data.token)
+      tenantStore.setTenantId(res.data.tenantId)
+      token.value = res.data.token
+    }
+    return res.data
   }
 
   // 邮箱登录
-  const emailLogin = async (req: EmailLoginReq, tenantCode?: string) => {
+  const emailLogin = async (req: EmailLoginReq, tenantCode?: string): Promise<LoginResp> => {
     const res = await emailLoginApi({ ...req, clientId: import.meta.env.VITE_CLIENT_ID, authType: AuthTypeConstants.EMAIL }, tenantCode)
-    setToken(res.data.token)
-    tenantStore.setTenantId(res.data.tenantId)
-    token.value = res.data.token
+    if (res.data.token) {
+      setToken(res.data.token)
+      tenantStore.setTenantId(res.data.tenantId)
+      token.value = res.data.token
+    }
+    return res.data
   }
 
   // 手机号登录
-  const phoneLogin = async (req: PhoneLoginReq, tenantCode?: string) => {
+  const phoneLogin = async (req: PhoneLoginReq, tenantCode?: string): Promise<LoginResp> => {
     const res = await phoneLoginApi({ ...req, clientId: import.meta.env.VITE_CLIENT_ID, authType: AuthTypeConstants.PHONE }, tenantCode)
-    setToken(res.data.token)
-    tenantStore.setTenantId(res.data.tenantId)
-    token.value = res.data.token
+    if (res.data.token) {
+      setToken(res.data.token)
+      tenantStore.setTenantId(res.data.tenantId)
+      token.value = res.data.token
+    }
+    return res.data
   }
 
   // 三方账号登录
-  const socialLogin = async (source: string, req: any) => {
+  const socialLogin = async (source: string, req: any): Promise<LoginResp> => {
     const res: any = await socialLoginApi({ ...req, source, clientId: import.meta.env.VITE_CLIENT_ID, authType: AuthTypeConstants.SOCIAL })
-    setToken(res.data.token)
-    tenantStore.setTenantId(res.data.tenantId)
-    token.value = res.data.token
+    if (res.data.token) {
+      setToken(res.data.token)
+      tenantStore.setTenantId(res.data.tenantId)
+      token.value = res.data.token
+    }
+    return res.data
   }
 
   // 退出登录回调
