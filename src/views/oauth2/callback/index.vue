@@ -47,19 +47,11 @@ const exchangeToken = async () => {
     params.append('redirect_uri', clientConfig.redirectUri)
 
     const { data } = await rawHttp.post('/oauth2/token', params)
-    if (data.data?.error) {
-      tokenError.value = `${data.data.error}: ${data.data.error_description || '未知错误'}`
-    } else if (data.data) {
-      tokenResult.value = data.data
-    } else {
-      tokenResult.value = data
-    }
+    tokenResult.value = data
   } catch (e: any) {
     const respData = e?.response?.data
-    if (respData?.data?.error) {
-      tokenError.value = `${respData.data.error}: ${respData.data.error_description || ''}`
-    } else if (respData?.msg) {
-      tokenError.value = respData.msg
+    if (respData?.error) {
+      tokenError.value = `${respData.error}: ${respData.error_description || '未知错误'}`
     } else {
       tokenError.value = e?.message || '换码失败'
     }
@@ -69,7 +61,7 @@ const exchangeToken = async () => {
 }
 
 const fetchUserInfo = async () => {
-  const accessToken = tokenResult.value?.accessToken || tokenResult.value?.access_token
+  const accessToken = tokenResult.value?.access_token
   if (!accessToken) {
     Message.warning('请先获取 Access Token')
     return
@@ -78,7 +70,7 @@ const fetchUserInfo = async () => {
     const { data } = await rawHttp.get('/oauth2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    userInfoResult.value = data.data || data
+    userInfoResult.value = data
   } catch {
     Message.error('获取用户信息失败')
   }
@@ -143,18 +135,18 @@ onMounted(() => {
       <template v-else-if="tokenResult">
         <a-descriptions :column="1" bordered size="small" style="margin-bottom: 20px" title="Token 响应">
           <a-descriptions-item label="access_token">
-            <a-typography-paragraph :copyable="{ text: tokenResult.accessToken || tokenResult.access_token }" style="margin: 0; word-break: break-all;">
-              {{ tokenResult.accessToken || tokenResult.access_token }}
+            <a-typography-paragraph :copyable="{ text: tokenResult.access_token }" style="margin: 0; word-break: break-all;">
+              {{ tokenResult.access_token }}
             </a-typography-paragraph>
           </a-descriptions-item>
           <a-descriptions-item label="refresh_token">
-            <a-typography-paragraph v-if="tokenResult.refreshToken || tokenResult.refresh_token" :copyable="{ text: tokenResult.refreshToken || tokenResult.refresh_token }" style="margin: 0; word-break: break-all;">
-              {{ tokenResult.refreshToken || tokenResult.refresh_token }}
+            <a-typography-paragraph v-if="tokenResult.refresh_token" :copyable="{ text: tokenResult.refresh_token }" style="margin: 0; word-break: break-all;">
+              {{ tokenResult.refresh_token }}
             </a-typography-paragraph>
             <span v-else>-</span>
           </a-descriptions-item>
-          <a-descriptions-item label="token_type">{{ tokenResult.tokenType || tokenResult.token_type }}</a-descriptions-item>
-          <a-descriptions-item label="expires_in">{{ tokenResult.expiresIn || tokenResult.expires_in }} 秒</a-descriptions-item>
+          <a-descriptions-item label="token_type">{{ tokenResult.token_type }}</a-descriptions-item>
+          <a-descriptions-item label="expires_in">{{ tokenResult.expires_in }} 秒</a-descriptions-item>
           <a-descriptions-item label="scope">{{ tokenResult.scope }}</a-descriptions-item>
         </a-descriptions>
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Message } from '@arco-design/web-vue'
 import { useRoute } from 'vue-router'
 import { type Oauth2ConsentData, approveConsent, denyConsent, getConsentInfo } from '@/apis/oauth2/consent'
 import { useAppStore, useUserStore } from '@/stores'
@@ -58,21 +57,13 @@ const fetchConsentInfo = async () => {
   }
   try {
     const { data } = await getConsentInfo(authReqId.value)
-    if ((data as any).error) {
-      error.value = (data as any).error_description || '授权请求异常，请返回应用重新发起'
-      return
-    }
     if (!data.needConsent && data.redirectUrl) {
       window.location.href = data.redirectUrl
       return
     }
     consentData.value = data.consentData
-  } catch (e: any) {
-    if (e?.response?.status === 400) {
-      error.value = '授权请求已过期，请返回应用重新发起'
-    } else {
-      error.value = '加载失败，请重试'
-    }
+  } catch {
+    error.value = '授权请求已过期或无效，请返回应用重新发起'
   } finally {
     loading.value = false
     setTimeout(() => {
@@ -85,14 +76,8 @@ const handleApprove = async () => {
   submitting.value = true
   try {
     const { data } = await approveConsent(authReqId.value)
-    if ((data as any).error) {
-      Message.error((data as any).error_description || '授权失败')
-      submitting.value = false
-      return
-    }
     window.location.href = data.redirectUrl
   } catch {
-    Message.error('授权操作失败，请重试')
     submitting.value = false
   }
 }
@@ -101,14 +86,8 @@ const handleDeny = async () => {
   submitting.value = true
   try {
     const { data } = await denyConsent(authReqId.value)
-    if ((data as any).error) {
-      Message.error((data as any).error_description || '操作失败')
-      submitting.value = false
-      return
-    }
     window.location.href = data.redirectUrl
   } catch {
-    Message.error('操作失败，请重试')
     submitting.value = false
   }
 }
